@@ -1,7 +1,7 @@
 # MicroLLM
 microLLM is a decoder-only Transformer language model and reasoning engine built from scratch in PyTorch. 
 
-The project implements the complete pipeline—tokenizer integration, multi-head attention mechanisms, causal masking, target loss masking, and reinforcement learning alignment algorithms—without relying on high-level framework abstractions like Hugging Face Transformers for the model architecture.
+The project implements the complete pipeline—tokenizer integration, multi-head attention mechanisms, masking, target loss masking, and reinforcement learning alignment algorithms
 
 ---
 
