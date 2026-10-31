@@ -794,9 +794,9 @@ def run_grpo():
     ref_model = copy.deepcopy(model).eval()
     for p in ref_model.parameters(): p.requires_grad = False
     rl_eval_prompts = [
-        "Question: If it takes 10 minutes to boil 1 egg, how long does it take to boil 3 eggs?\nSolve step by step.\n<think>\n", # Parallelism
-        "Question: Which is larger, 9.11 or 9.9?\nSolve step by step.\n<think>\n", # Tokenizer/Decimal bias
-        "Question: Lisa has 5 apples. She buys 2 more, then drops 1. How many does she have?\nSolve step by step.\n<think>\n" # State tracking
+        "Question: If it takes 10 minutes to boil 1 egg, how long does it take to boil 3 eggs?\nSolve step by step.\n<think>\n", 
+        "Question: Which is larger, 9.11 or 9.9?\nSolve step by step.\n<think>\n", 
+        "Question: If one shirt takes an hour to dry in the sun, how long would five shirts take?\nSolve step by step.\n<think>\n" 
     ]
 
     start_time = time.time()
@@ -864,7 +864,7 @@ def run_grpo():
             mask = torch.zeros_like(padded)
             for j, t in enumerate(tokens_list):
                 padded[j, :len(t)] = t
-                mask[j, 20:len(t)] = 1.0
+                mask[j, max_p_len:len(t)] = 1.0  #fixed masks out the padded prompt lenght
 
             expanded_ans = [a for a in answers for _ in range(cfg["group_size"])]
             rewards = get_rewards(completions, expanded_ans, device)
