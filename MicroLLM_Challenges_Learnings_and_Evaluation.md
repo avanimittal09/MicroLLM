@@ -47,7 +47,7 @@ Developing a small reasoning model was an uphill battle exposing me to multiple 
 
 * **Root Cause:** Policy gradient methods like GRPO rely on variance across sampled trajectories ($r_i - \mu_{\text{group}}$) to compute gradients. When all $G = 4$ rollouts score zero, the advantage is uniform zero ($A_i = 0$), and no learning occurs.
 
-* **Fix: ** I introduced **Phase 2 (Supervised Fine-Tuning)** across 7,000+ step-by-step math proofs (*Stanford Alpaca*, *OpenMathInstruct-1*, and *GSM8K*) teaching the model formatted output with `<think>` tags and basic algebraic operations. 
+* **Fix:** I introduced **Phase 2 (Supervised Fine-Tuning)** across 7,000+ step-by-step math proofs (*Stanford Alpaca*, *OpenMathInstruct-1*, and *GSM8K*) teaching the model formatted output with `<think>` tags and basic algebraic operations. 
 
 ### Challenge 2: Prompt Memorization
 
@@ -55,7 +55,7 @@ Developing a small reasoning model was an uphill battle exposing me to multiple 
 
 * **Root Cause:** Standard cross-entropy loss backpropagates across every token in the sequence by default, allowing the model to try to lower its loss by predicting tokens in the prompt itself.
 
-* **Fix: ** Wrote a custom `collate()` function with **prompt-token loss masking**, setting `targets[i, :mask_end] = -100` (PyTorch's `ignore_index`) up to `p_len - 1` so gradients backpropagated through the `<think>` reasoning steps and final answer only. 
+* **Fix:** Wrote a custom `collate()` function with **prompt-token loss masking**, setting `targets[i, :mask_end] = -100` (PyTorch's `ignore_index`) up to `p_len - 1` so gradients backpropagated through the `<think>` reasoning steps and final answer only. 
 
 ### Challenge 3: Infinite Thinking Loops
 
@@ -63,7 +63,7 @@ Developing a small reasoning model was an uphill battle exposing me to multiple 
 
 * **Root Cause:** In initially started with group size of 16 in RL stage. Generating 16 responses per prompt in RL is highly memory-intensive. So I truncated training sequences to a short window (256 tokens) to conserve memory. As a result, the model stopped seeing `<|endoftext|>` (`50256`) tokens during training and learned that reasoning chains were meant to run indefinitely.
 
-* **Fix: ** Expanded context window (`context_length`) to **1,024 tokens**, along with reducing the group size to 4, added batch padding and explicit EOS masking (`finished_mask |= (next_tok.squeeze(-1) == 50256)`). This gave the model sufficient budget to complete its `<think>` token and naturally emit `<|endoftext|>`.
+* **Fix:** Expanded context window (`context_length`) to **1,024 tokens**, along with reducing the group size to 4, added batch padding and explicit EOS masking (`finished_mask |= (next_tok.squeeze(-1) == 50256)`). This gave the model sufficient budget to complete its `<think>` token and naturally emit `<|endoftext|>`.
 
 ### Challenge 4: Reward Hacking (The `1+1=2` Loophole)
 
@@ -81,7 +81,7 @@ Developing a small reasoning model was an uphill battle exposing me to multiple 
 
 * **Root Cause:** The initial reward function naively granted `+0.1` points for every line inside `<think>` (`score += len(lines) * 0.1`) to encourage multi-step thinking. The neural network discovered it could bypass difficult word-problem reasoning entirely and farm reward points by repeating a trivial equation 50 times.
 
-* **Fix: ** Rewrote `get_rewards()` with multiple mathematical constraints:
+* **Fix:** Rewrote `get_rewards()` with multiple mathematical constraints:
 
   1. **Repetition Penalty:** Parsed lines into a Python set (`unique_lines = set(lines)`) and applied a heavy **`-0.5` penalty per duplicate line** (`score -= 0.5 * repeats`).
 
@@ -91,16 +91,14 @@ Developing a small reasoning model was an uphill battle exposing me to multiple 
 
 * Once repetition loops were handled, the model attempted 3 new hacks: echoing the `"Question: ..."` prompt inside its answer, stuffing `"####"` answer markers inside the `<think>` block or outputting ```` ```python ```` tags inherited from web pre-training instead of solving the math.
 
-* **Fix: ** Added filters in `get_rewards()`: a `-0.5` penalty for starting completions with `"Question:"`, a `-1.0` penalty for leaking `"####"` or `"\boxed"` inside `<think>`, a `-10.0` penalty for emitting code blocks, and a `-0.5` lazy-thinking penalty if `len(think_content) < 100`.
+* **Fix:** Added filters in `get_rewards()`: a `-0.5` penalty for starting completions with `"Question:"`, a `-1.0` penalty for leaking `"####"` or `"\boxed"` inside `<think>`, a `-10.0` penalty for emitting code blocks, and a `-0.5` lazy-thinking penalty if `len(think_content) < 100`.
 
 
-### Challenge 7: Colab Runtime Issues
+### Challenge 6: Colab Runtime Issues
 
 * Free-tier Google Colab T4 GPUs enforce strict memory limits and disconnect unpredictably after \~3 hours, risking corrupt checkpoint files if a disconnect occurs mid-write.
 
-* **Fix: **
-
-  1. Built an **atomic checkpointing system** (`save_checkpoint`) that serializes model and optimizer states to a temporary file (`filename + ".tmp"`) before executing an atomic file swap (`os.replace(tmp_path, full_path)`) every 400 steps.
+* **Fix:** Built an **atomic checkpointing system** (`save_checkpoint`) that serializes model and optimizer states to a temporary file (`filename + ".tmp"`) before executing an atomic file swap (`os.replace(tmp_path, full_path)`) every 400 steps.
 
 ---
 
@@ -127,35 +125,23 @@ Since the model was trained in a very resource constraint environment and only h
 
 3. Engineering around a single T4 GPU's memory ceiling—via weight tying, vectorized group rollouts and prompt-loss masking—triggered a deeper research interest in **resource-constrained machine learning**. Proving that structured reasoning can emerge at the 28M-parameter scale highlights the potential of algorithmic efficiency.
 
+---
 
+## 5. Resources
 
-## 4. Learning Resources : Books & Video Series
-Developing MicroLLM required understanding theoretical foundations from textbooks with practical implementation walkthroughs [1][4]. The following books and video series helped me with the model's tokenizer design, model architecture, Supervised Fine-Tuning (SFT), and Group Relative Policy Optimization (GRPO) pipeline:
+Developing MicroLLM required understanding theoretical foundations from textbooks with practical implementation walkthroughs. The following books and video series helped me with the model's tokenizer design, model architecture, Supervised Fine-Tuning (SFT), and Group Relative Policy Optimization (GRPO) pipeline:
 
 Foundational Books on LLMs & Reinforcement Learning
 
-	•	Build a Large Language Model (From Scratch) — Sebastian Raschka, PhD (Manning): A step-by-step PyTorch implementation guide covering text embeddings, Byte Pair Encoding (BPE) tokenization, Multi-Head Self-Attention, GPT-style decoder blocks, pre-training loops, and instruction fine-tuning.
-	•	Build a Reasoning Model (From Scratch) — Sebastian Raschka, PhD (Manning): Focuses specifically on post-training methodologies for reasoning LLMs, including chain-of-thought (CoT) generation, reinforcement learning with verifiable rewards, and distillation.
+	•	Build a Large Language Model (From Scratch) — Sebastian Raschka, PhD (Manning)
+	•	Build a Reasoning Model (From Scratch) — Sebastian Raschka, PhD (Manning)
 
 Video Lectures
 
-Video Series
-Creator / Instructor
-Core Concepts Applied in MicroLLM
-Resource Link
-
-Building Reasoning LLM
-Video Series
-End-to-end reasoning pipeline orchestration, <think> tag formatting, SFT prompt masking, and GRPO reward shaping.
-https://www.youtube.com/watch?v=k2QEElQ9eeM&list=PLPTV0NXA_ZSijcbUrRZHm6BrdinLuelPs
-Let's build GPT: from scratch, in code, spelled out
-Andrej Karpathy
-Implementing causal Multi-Head Self-Attention, Pre-LayerNorm residual connections, GELU activations, and autoregressive generation loops in PyTorch.
-https://www.youtube.com/watch?v=kCc8FmEb1nY
-Let's build the GPT Tokenizer
-Andrej Karpathy
-Byte Pair Encoding (BPE) internals, tiktoken GPT-2 vocabulary structure (50,257 base tokens padded to 50,304), and special delimiter handling (EOS token 50256).
-https://www.youtube.com/watch?v=zduSFxRajkE&t=2179s
-
+| Video Series | Creator / Instructor | Core Concepts | 
+ | ----- | ----- | ----- |
+| [**Building Reasoning LLM**](https://www.youtube.com/watch?v=k2QEElQ9eeM&list=PLPTV0NXA_ZSijcbUrRZHm6BrdinLuelPs) | Video Series | End-to-end reasoning pipeline orchestration, <think> tag formatting, SFT prompt masking, and GRPO reward shaping | Trained the model on next token prediction for grammar and language understanding across packed `1,024`-token buffers; Eliminated checkpoint corruption via atomic `.tmp` $\rightarrow$ `.pth` saves every `400` steps. | 
+| [**Let's build GPT: from scratch**](https://www.youtube.com/watch?v=kCc8FmEb1nY) | Andrej Karpathy |Implementing causal Multi-Head Self-Attention, Pre-LayerNorm residual connections, GELU activations, and autoregressive generation loops in PyTorch. | 
+| [**Let's build the GPT Tokenizer**](https://www.youtube.com/watch?v=zduSFxRajkE) | Andrej Karpathy | Byte Pair Encoding (BPE) internals, tiktoken GPT-2 vocabulary structure (50,257 base tokens padded to 50,304), and special delimiter handling (EOS token 50256). | 
 
 
