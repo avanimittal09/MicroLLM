@@ -899,7 +899,8 @@ def run_grpo():
                 global_step += 1
                 timestamp = datetime.datetime.now().strftime('%H:%M:%S')
                 if global_step % 10 == 0:
-                  print(f"\n[{timestamp}] GRPO Ep {epoch} | Step {global_step} |loss: {loss.item()*accum_steps:.4f} | reward: {avg_reward:.4f}", flush=True)
+                  total_rl_tokens = global_step * cfg["batch_size"] * cfg["group_size"] * 200
+                  print(f"\n[{timestamp}] GRPO Ep {epoch} | Step {global_step} | RL tokens : {total_rl_tokens} | loss: {loss.item()*accum_steps:.4f} | reward: {avg_reward:.4f}", flush=True)
 
                 if global_step % 50 == 0:
                     print(f"\n RL REASONING CHECK (Step {i}):")
