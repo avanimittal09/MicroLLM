@@ -86,4 +86,5 @@ Training an LLM from scratch on a single Google Colab GPU came with real hardwar
 * **FP16 Mixed Precision (`torch.amp.autocast`):** Runs forward and backward passes in 16-bit floating point to cut GPU memory usage in half and roughly double training speed.
 * **Gradient Accumulation:** Uses a micro-batch size of `4` and accumulates gradients over `8` steps (`effective batch size = 32`), allowing stable training without running out of GPU memory.
 * **Batched RL Generation:** In the GRPO loop, all `batch_size × group_size` prompts (16 sequences) are stacked and generated in a single parallel GPU loop rather than one by one.
-ng.
+## Credits and limitations
+I followed Sebastian Raschka's *Build a Large Language Model (From Scratch)* and Andrej Karpathy's GPT and tokenizer lectures, and used AI assistance for debugging and parts of the reward function. I did not run a formal benchmark: the final model produces `<think>`-formatted output, but its arithmetic is often wrong.
