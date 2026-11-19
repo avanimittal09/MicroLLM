@@ -1,6 +1,6 @@
 # MicroLLM Key Challenges & Learnings
 
-**Project Overview:** Building a Reasoning language models is not just throwing tons of text book data on a neural network. It requires a carefully planned multi stage training pipeline. In this doc, I have documented key challenges and my learning training a small scale reasoning model which shows its thinking addition to generate a response to a math problem. **MicroLLM** implements a **28.3-million parameter** decoder-only Transformer in PyTorch—trained end-to-end on a single Google Colab T4 GPU (16GB VRAM) across **Pre-Training**, **SFT**, and **Group Relative Policy Optimization (GRPO)** (all project-specific configurations, metrics, and failure modes below are derived directly from the MicroLLM PyTorch training script and project logs provided in this session).
+**Project Overview:** Building a Reasoning language models is not just throwing tons of text book data on a neural network. It requires a carefully planned multi stage training pipeline. In this doc, I have documented key challenges and my learning training a small scale reasoning model which shows its thinking addition to generate a response to a math problem. **MicroLLM** implements a **28.3-million parameter** decoder-only Transformer in PyTorch—trained end-to-end on a single Google Colab T4 GPU (16GB VRAM) across **Pre-Training**, **SFT**, and **Group Relative Policy Optimization (GRPO)**
 
 ---
 
