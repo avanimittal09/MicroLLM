@@ -44,6 +44,8 @@ All datasets are loaded from Hugging Face using the `datasets` library:
 | **Phase 2: SFT** | `nvidia/OpenMathInstruct-1` | Step-by-step math solutions | **10,000 samples** — Teaches structured chain-of-thought reasoning. |
 | **Phase 2 & 3: SFT & RL** | `gsm8k` | Grade School Math 8K word problems | Used in SFT for step-by-step training and in GRPO for reinforcement learning. |
 
+
+The first pretraining run used a 50/50 mix of TinyStories and FineWeb-Edu. The final run, which the code in this repo reflects, used 85% FineWeb-Edu and 15% OpenWebMath.
 ---
 
 ##  The 3-Stage Training Pipeline
